@@ -1,0 +1,19 @@
+.modal-button {
+  background-color: rgb(232, 87, 100);
+  color:white;
+}
+
+p {
+  padding: 10px;
+  color: grey;
+}
+
+td > button {
+  background-color: #4BB363;
+  border: none;
+  color: white;
+  padding: 12px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}

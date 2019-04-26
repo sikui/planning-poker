@@ -1,0 +1,139 @@
+<html>
+<head>
+  <title>Create Polls</title>
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+
+<div class="row">
+   <div class="col-3"> <img src="images/logo.png"/></div>
+  <div class="col"> <h1> Epidemic Sound Polls</h1> </div>
+</div>
+<div class="container">
+  <div class="row">
+
+    <div class="col">
+       <p> <i class="fas fa-poll"></i> New Polls </p>
+      <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Title</th>
+              <th scope="col">Description</th>
+              <th scope="col">Created at</th>
+              <th scope="col">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">1</th>
+              <td>Mark</td>
+              <td>Otto</td>
+              <td>@mdo</td>
+              <td> <button data-toggle="modal" data-target="#pollDetailsModal"><i class="fas fa-external-link-alt"></i></button> </td>
+            </tr>
+
+          </tbody>
+      </table>
+    </div> <!-- List of Polls -->
+    <div class="col">
+      <div>
+        <p> <i class="fas fa-poll"></i>Polls created by me </p>
+      </div>
+      <div>
+        <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Title</th>
+                <th scope="col">Description</th>
+                <th scope="col">Created at</th>
+                <th scope="col">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">2</th>
+                <td>Jacob</td>
+                <td>Thornton</td>
+                <td>@fat</td>
+                <td> <button data-toggle="modal" data-target="#pollDetailsModal"><i class="fas fa-external-link-alt"></i></i></button> </td>
+              </tr>
+              <tr>
+                <th scope="row">3</th>
+                <td>Larry</td>
+                <td>the Bird</td>
+                <td>@twitter</td>
+                <td> <button data-toggle="modal" data-target="#pollDetailsModal"><i class="fas fa-external-link-alt"></i></button> </td>
+              </tr>
+            </tbody>
+        </table>
+      </div>
+      <div >
+        <button type="button" class="btn modal-button" data-toggle="modal" data-target="#pollModal">Create a poll</button>
+      </div>
+      </div>
+    </div> <!-- Create + List of user POlls -->
+
+    <!-- Modal for poll creation -->
+<div class="modal fade" id="pollModal" tabindex="-1" role="dialog" aria-labelledby="pollModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create a poll</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group">
+           <label for="pollTitle">Title</label>
+           <input type="text" class="form-control" id="pollTitle" placeholder="Enter a title">
+         </div>
+         <div class="form-group">
+           <label for="pollDescription">Description</label>
+           <textarea class="form-control" aria-label="With textarea"></textarea>
+         </div>
+        </form>
+        <div style="display:none;">
+          <p> <i class="fas fa-link"></i> Share Link:</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn modal-button">Save</button>
+      </div>
+    </div>
+  </div>
+</div> <!-- End of Modal -->
+
+<!-- Modal for poll details -->
+<div class="modal fade" id="pollDetailsModal" tabindex="-1" role="dialog" aria-labelledby="pollDetailsModal" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create a poll</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn modal-button">Save</button>
+      </div>
+    </div>
+  </div>
+</div> <!-- End of Modal -->
+
+
+</div> <!-- Main Page -->
+</body>
+</html>
