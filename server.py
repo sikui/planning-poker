@@ -26,11 +26,25 @@ class Users(object):
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
     def list_user_polls(self, user_id):
-        return {"message" : "listing user polls"}
+        if user_id is None:
+            cherrypy.response.status = 400
+            return {"message" : "Missing user id"}
+        with sqlite3.connect("polls.db") as c:
+            result = c.execute("SELECT * FROM polls WHERE user_id = ?", [user_id])
+            poll_list = list()
+            for poll in result.fetchall():
+                tmp = dict()
+                tmp['id'] = poll[0]
+                tmp['title'] = poll[1]
+                tmp['description'] = poll[1]
+                poll_list.append(tmp)
+        return {"polls" : poll_list}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
     def poll_user_vote(self):
         return {"message": "list of users vote"}
 
