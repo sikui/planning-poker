@@ -53,16 +53,30 @@ class Poll(object):
             return {"message": "Some field in the request are empty."}
         # create a new poll
         with sqlite3.connect("polls.db") as c:
-            c.execute("INSERT INTO polls (title, description, created_at, user_id) VALUES (?, ?, ?, ?)",
+            cursor = c.execute("INSERT INTO polls (title, description, created_at, user_id) VALUES (?, ?, ?, ?)",
                 [data['title'], data['description'], data['created_at'] , data['user_id']])
             c.commit()
-        return {"message_poll" :"calling post method"}
+        return {"resource_id" : cursor.lastrowid}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
     @cherrypy.popargs('poll_id')
     def edit_poll(self, poll_id):
-        return {"message": "edit poll"}
+        data = cherrypy.request.json
+        if data.get("id") is None:
+            cherrypy.response.status = 400
+            return {"message": "Poll ID is not in the request."}
+        poll_id = data.get("id")
+        data.pop("id")
+        update_str = list()
+        for key in data.keys():
+            update_str.append('SET {}="{}"'.format(key, data[key]))
+        with sqlite3.connect("polls.db") as c:
+            print("UPDATE polls {} WHERE id = {}".format(','.join(item for item in update_str), poll_id))
+            c.execute("UPDATE polls {} WHERE id = {}".format(','.join(item for item in update_str), poll_id))
+            c.commit()
+        return {"data": "Poll correctly modified."}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
