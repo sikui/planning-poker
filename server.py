@@ -4,10 +4,6 @@ import sqlite3
 def CORS():
     cherrypy.response.headers["Access-Control-Allow-Origin"] = "http://localhost"
 
-def db_connect():
-    conn = sqlite3.connect('polls.db')
-    c = conn.cursor()
-
 
 @cherrypy.tools.json_out()
 @cherrypy.popargs('user_id', 'poll_id')
@@ -52,9 +48,14 @@ class Poll(object):
         if not all(key in keys for key in self.mandatory_field):
             cherrypy.response.status = 400
             return {"message": "The request is not well formed."}
-        if not any([value for value in data.values() if value == ""]) :
+        if any([value == "" for value in data.values()]) :
             cherrypy.response.status = 400
             return {"message": "Some field in the request are empty."}
+        # create a new poll
+        with sqlite3.connect("polls.db") as c:
+            c.execute("INSERT INTO polls (title, description, created_at, user_id) VALUES (?, ?, ?, ?)",
+                [data['title'], data['description'], data['created_at'] , data['user_id']])
+            c.commit()
         return {"message_poll" :"calling post method"}
 
     @cherrypy.expose
@@ -71,7 +72,6 @@ class Poll(object):
 
 
 if __name__ == '__main__':
-    db_connect()
     cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
     d = cherrypy.dispatch.RoutesDispatcher()
 
