@@ -5,15 +5,46 @@ def CORS():
     cherrypy.response.headers["Access-Control-Allow-Origin"] = "http://localhost"
 
 
-@cherrypy.tools.json_out()
 @cherrypy.popargs('user_id', 'poll_id')
+@cherrypy.tools.json_out()
+@cherrypy.tools.json_in()
 class Vote(object):
     def __init__(self):
-        pass
+        self.possible_votes = [0, 0.5, 1, 2, 3, 5, 8, 13]
+        self.mandatory_field = ['value', 'poll_id', 'user_id']
 
     @cherrypy.expose
     def create_or_edit_vote(self, user_id, poll_id):
-        return {"message": "created vote"}
+        data = cherrypy.request.json
+        keys = list(data.keys())
+        # TODO: check existence of user_id and poll_id before inserting
+        if poll_id is None:
+            cherrypy.response.status = 400
+            return {"message" : "Poll ID is missing."}
+        try:
+            int(poll_id)
+        except ValueError:
+            cherrypy.response.status = 400
+            return {"message": "Invalid Poll ID."}
+        if user_id is None:
+            cherrypy.response.status = 400
+            return {"message" : "User ID is missing."}
+        if data.get('value') is None:
+            cherrypy.response.status = 400
+            return {"message" : "Vote value is missing."}
+        try:
+            vote = int(data['value'])
+            if vote not in self.possible_votes:
+                cherrypy.response.status = 400
+                return {"message" : "Invalid vote value."}
+        except ValueError:
+            cherrypy.response.status = 400
+            return {"message" : "Vote should be numeric."}
+        # create a new vote
+        with sqlite3.connect("polls.db") as c:
+            c.execute("INSERT INTO votes VALUES (?, ?, ?)",
+            [data['value'], poll_id, user_id])
+        return {"message": "The vote has been registerd."}
 
     @cherrypy.expose
     def poll_user_vote(self, poll_id, user_id):
@@ -31,6 +62,9 @@ class Users(object):
         if user_id is None:
             cherrypy.response.status = 400
             return {"message" : "Missing user id"}
+        if user_id.strip() == "":
+            cherrypy.response.status = 400
+            return {"message" : "User ID cannot be empty."}
         with sqlite3.connect("polls.db") as c:
             result = c.execute("SELECT * FROM polls WHERE user_id = ?", [user_id])
             poll_list = list()
@@ -70,7 +104,7 @@ class Poll(object):
             cursor = c.execute("INSERT INTO polls (title, description, created_at, user_id) VALUES (?, ?, ?, ?)",
                 [data['title'], data['description'], data['created_at'] , data['user_id']])
             c.commit()
-        return {"resource_id" : cursor.lastrowid}
+        return {"poll_id" : cursor.lastrowid}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -90,13 +124,27 @@ class Poll(object):
             print("UPDATE polls {} WHERE id = {}".format(','.join(item for item in update_str), poll_id))
             c.execute("UPDATE polls {} WHERE id = {}".format(','.join(item for item in update_str), poll_id))
             c.commit()
-        return {"data": "Poll correctly modified."}
+        return {"message": "Poll correctly modified."}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
     @cherrypy.popargs('poll_id')
     def polls_details(self, poll_id):
-        return {"ciao": "calling get method"}
+        if poll_id is None:
+            cherry.response.status = 400
+            return {"message": "Missing poll id in the request."}
+        if poll_id.strip() == "":
+            cherry.response.status = 400
+            return {"message": "Poll ID cannot be empty"}
+        with sqlite3.connect("polls.db") as c:
+            poll = c.execute("SELECT * FROM polls WHERE id = ?", [poll_id])
+        poll_details = poll.fetchone()
+        return {"poll": {
+                "title" : poll_details[1],
+                "description" : poll_details[2],
+                "created_at" : poll_details[3]
+            }
+        }
 
 
 if __name__ == '__main__':
