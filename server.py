@@ -42,8 +42,14 @@ class Users(object):
 class Poll(object):
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    def create_or_edit_poll(self):
+    def create_poll(self):
         return {"message_poll" :"calling post method"}
+
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.popargs('poll_id')
+    def edit_poll(self, poll_id):
+        return {"message": "edit poll"}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -59,7 +65,12 @@ if __name__ == '__main__':
 
     d.connect("default", route="/",
                  controller=Poll(),
-                 action='create_or_edit_poll',
+                 action='create_poll',
+                 conditions=dict(method=['POST']))
+
+    d.connect("default", route="/{poll_id}",
+                 controller=Poll(),
+                 action='edit_poll',
                  conditions=dict(method=['POST']))
 
     d.connect("polls_details", route="/{poll_id}",
