@@ -40,9 +40,21 @@ class Users(object):
 
 
 class Poll(object):
+    def __init__(self):
+        self.mandatory_field = ["title", "description", "created_at", "user_id"]
+
     @cherrypy.expose
     @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
     def create_poll(self):
+        data = cherrypy.request.json
+        keys = list(data.keys())
+        if not all(key in keys for key in self.mandatory_field):
+            cherrypy.response.status = 400
+            return {"message": "The request is not well formed."}
+        if not any([value for value in data.values() if value == ""]) :
+            cherrypy.response.status = 400
+            return {"message": "Some field in the request are empty."}
         return {"message_poll" :"calling post method"}
 
     @cherrypy.expose
