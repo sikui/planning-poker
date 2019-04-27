@@ -17,7 +17,7 @@ class Vote(object):
     def create_or_edit_vote(self, user_id, poll_id):
         data = cherrypy.request.json
         keys = list(data.keys())
-        # TODO: check existence of user_id and poll_id before inserting
+        # TODO: check if user_id and poll_id are valid before inserting
         if poll_id is None:
             cherrypy.response.status = 400
             return {"message" : "Poll ID is missing."}
@@ -42,8 +42,14 @@ class Vote(object):
             return {"message" : "Vote should be numeric."}
         # create a new vote
         with sqlite3.connect("polls.db") as c:
-            c.execute("INSERT INTO votes VALUES (?, ?, ?)",
-            [data['value'], poll_id, user_id])
+            exists = c.execute("SELECT * FROM votes WHERE user_id = ? AND poll_id = ?",
+            [user_id, poll_id])
+            if exists.fetchone() is not None :
+                c.execute("UPDATE votes SET value= ? WHERE user_id= ? AND poll_id = ?",
+                [vote, user_id, poll_id])
+            else:
+                c.execute("INSERT INTO votes VALUES (?, ?, ?)",
+                    [vote, poll_id, user_id])
         return {"message": "The vote has been registerd."}
 
     @cherrypy.expose
@@ -146,8 +152,13 @@ class Poll(object):
             }
         }
 
+def setup_database():
+    # enable foreign key enforcement in sqlite3
+    conn = sqlite3.connect("polls.db")
+    conn.execute("PRAGMA foreign_keys = 1")
 
 if __name__ == '__main__':
+    cherrypy.engine.subscribe('start', setup_database)
     cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
     d = cherrypy.dispatch.RoutesDispatcher()
 
