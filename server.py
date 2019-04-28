@@ -20,7 +20,7 @@ def CORS():
 @cherrypy.tools.json_in()
 class Vote(object):
     def __init__(self):
-        self.possible_votes = [0, 0.5, 1, 2, 3, 5, 8, 13]
+        self.possible_votes = ['0', '0.5', '1', '2', '3', '5', '8', '13']
         self.mandatory_field = ['value', 'poll_id', 'user_id']
 
     @cherrypy.expose
@@ -30,38 +30,38 @@ class Vote(object):
         # TODO: check if user_id and poll_id are valid before inserting
         if poll_id is None:
             cherrypy.response.status = 400
-            return {"message" : "Poll ID is missing."}
+            return {"error" : "Poll ID is missing."}
         try:
             int(poll_id)
         except ValueError:
             cherrypy.response.status = 400
-            return {"message": "Invalid Poll ID."}
+            return {"error": "Invalid Poll ID."}
         if user_id is None:
             cherrypy.response.status = 400
-            return {"message" : "User ID is missing."}
+            return {"error" : "User ID is missing."}
         if data.get('value') is None:
             cherrypy.response.status = 400
-            return {"message" : "Vote value is missing."}
+            return {"error" : "Vote value is missing."}
+        vote = data['value']
         try:
-            vote = int(data['value'])
+            int(vote)
             if vote not in self.possible_votes:
                 cherrypy.response.status = 400
-                return {"message" : "Invalid vote value."}
+                return {"error" : "Invalid vote value."}
         except ValueError:
             cherrypy.response.status = 400
-            return {"message" : "Vote should be numeric."}
+            return {"error" : "Vote should be numeric."}
         # create a new vote
-        c = cherrypy.thread_data.db.cursor()
-        c.execute("SELECT * FROM votes WHERE user_id = %s AND poll_id = %s",
-        [user_id, poll_id])
-        exists = c.fetchone()
-        if exists is not None :
-            c.execute("UPDATE votes SET value= %s WHERE user_id= %s AND poll_id = %s",
-            (vote, user_id, poll_id))
-        else:
-            c.execute("INSERT INTO votes VALUES (%s, %s, %s)",
-                (vote, poll_id, user_id))
-        return {"message": "The vote has been registerd."}
+        conn = cherrypy.thread_data.db
+        c = conn.cursor()
+        try:
+            c.execute("INSERT INTO votes (value, poll_id, user_id) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE value=%s",
+                (vote, poll_id, user_id, vote))
+            conn.commit()
+        except pymysql.err.IntegrityError:
+            cherrypy.response.status = 400
+            return {"error": "Inserting vote has encountered an error."}
+        return {"data": "The vote has been registerd."}
 
     @cherrypy.expose
     def poll_user_vote(self, poll_id, user_id):
