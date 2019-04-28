@@ -1,40 +1,91 @@
 $(document).ready(function(){
 
-  var ctx = document.getElementById('pollVotes').getContext('2d');
-  var myBarChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: ['0', '1/2', '1', '2', '3', '5', '8', '13'],
-        datasets: [{
-            label: '# of Votes',
-            data: [4, 1, 18 , 5, 1, 0, 1, 15],
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(153, 102, 255, 0.2)',
-                'rgba(255, 159, 64, 0.2)'
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)'
-            ],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero: true
-                }
-            }]
-        }
+  // perform ajax request
+  function doRequest(url, method, params) {
+
+    return $.ajax({
+      url: url,
+      type: method,
+      data: params,
+      dataType: "json"
+    });
+  }
+
+function addRowsTable(data, tableID) {
+  data.forEach(function (item, index) {
+    rowString = '<tr>' +
+        '<td data-id="' + item['id'] + '">' + item['title'] + '</td>' +
+        '<td>' + item['description'] + '</td>';
+    if (typeof(item['user_id']) != "undefined") {
+        rowString += '<td>' + item['user_id'] + '</td>';
     }
+    rowString +=
+      '<td> <button data-toggle="modal" data-target="#pollDetailsModal"><i class="fas fa-external-link-alt"></i></i></button> </td>' +
+      '<td> <button><i class="fas fa-link"></i></button> </td>' +
+      + '</tr>';
   });
+  $("#" + tableID + " tbody").append(rowString);
+}
+// list of user polls
+function loadUserPolls(){
+  var url = "/polls/users/silvia";
+  doRequest(url, "GET").done(function(response) {
+    polls = response['data']['polls'];
+    addRowsTable(polls,"user-polls")
+  });
+}
+// list of today's poll
+function loadTodayPolls(){
+
+  var url = "/polls/list/";
+  doRequest(url, "GET").done(function(response) {
+    polls = response['data']['polls'];
+    addRowsTable(polls, "current-polls");
+  });
+}
+
+
+ function loadChartData(){
+   // vote charts
+   var ctx = document.getElementById('pollVotes').getContext('2d');
+   var myBarChart = new Chart(ctx, {
+       type: 'bar',
+       data: {
+           labels: ['0', '1/2', '1', '2', '3', '5', '8', '13'],
+           datasets: [{
+               label: '# of Votes',
+               data: [4, 1, 18 , 5, 1, 0, 1, 15],
+               backgroundColor: [
+                   'rgba(255, 99, 132, 0.2)',
+                   'rgba(54, 162, 235, 0.2)',
+                   'rgba(255, 206, 86, 0.2)',
+                   'rgba(75, 192, 192, 0.2)',
+                   'rgba(153, 102, 255, 0.2)',
+                   'rgba(255, 159, 64, 0.2)'
+               ],
+               borderColor: [
+                   'rgba(255, 99, 132, 1)',
+                   'rgba(54, 162, 235, 1)',
+                   'rgba(255, 206, 86, 1)',
+                   'rgba(75, 192, 192, 1)',
+                   'rgba(153, 102, 255, 1)',
+                   'rgba(255, 159, 64, 1)'
+               ],
+               borderWidth: 1
+           }]
+       },
+       options: {
+           scales: {
+               yAxes: [{
+                   ticks: {
+                       beginAtZero: true
+                   }
+               }]
+           }
+       }
+     });
+   }
+
+   loadTodayPolls();
+   loadUserPolls();
 });
