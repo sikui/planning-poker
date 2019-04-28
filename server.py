@@ -88,7 +88,7 @@ class Users(object):
         pass
 
     @cherrypy.expose
-    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_out(handler=json_handler)
     @cherrypy.tools.json_in()
     def list_user_polls(self, user_id):
         if user_id is None:
@@ -98,13 +98,14 @@ class Users(object):
             cherrypy.response.status = 400
             return {"message" : "User ID cannot be empty."}
         c = cherrypy.thread_data.db.cursor()
-        result = c.execute("SELECT * FROM polls WHERE user_id = %ss", (user_id))
+        c.execute("SELECT * FROM polls WHERE user_id = %s", (user_id))
         poll_list = list()
-        for poll in result.fetchall():
+        result = c .fetchall()
+        for poll in result:
             tmp = dict()
-            tmp['id'] = poll[0]
-            tmp['title'] = poll[1]
-            tmp['description'] = poll[1]
+            tmp['id'] = poll['id']
+            tmp['title'] = poll['title']
+            tmp['description'] = poll['description']
             poll_list.append(tmp)
         return {"polls" : poll_list}
 
