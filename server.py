@@ -170,12 +170,16 @@ class Poll(object):
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE id = %s", (poll_id))
         poll_details = c.fetchone()
-        return {"poll": {
-                "title" : poll_details['title'],
-                "description" : poll_details['description'],
-                "created_at" : poll_details['created_at']
-            }
-        }
+        if poll_details:
+            return {"data": {
+                            "poll" :{
+                                "title" : poll_details['title'],
+                                "description" : poll_details['description'],
+                                "created_at" : poll_details['created_at']
+                                }
+                            }
+                    }
+        else: return {"data" : {"poll" : None}}
 
 def setup_database(threadIndex):
     cherrypy.thread_data.db = pymysql.connect(host='localhost',
