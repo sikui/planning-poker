@@ -54,7 +54,22 @@ class Vote(object):
 
     @cherrypy.expose
     def poll_user_vote(self, poll_id, user_id):
-        return {"message": "list user votes"}
+        if poll_id is None:
+            cherrypy.response.status = 400
+            return {"data" : "Poll ID is missing."}
+        try:
+            int(poll_id)
+        except ValueError:
+            cherrypy.response.status = 400
+            return {"data": "Invalid Poll ID."}
+        if user_id is None:
+            cherrypy.response.status = 400
+            return {"data" : "User ID is missing."}
+        with sqlite3.connect("polls.db") as c:
+            vote =c.execute("SELECT value FROM votes WHERE user_id=? AND poll_id = ?",
+            [user_id, poll_id])
+            value = vote.fetchone()
+        return {"data" : {"vote": value[0] if value else None}}
 
 @cherrypy.popargs('user_id')
 class Users(object):
@@ -81,12 +96,6 @@ class Users(object):
                 tmp['description'] = poll[1]
                 poll_list.append(tmp)
         return {"polls" : poll_list}
-
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.json_in()
-    def poll_user_vote(self):
-        return {"message": "list of users vote"}
 
 
 class Poll(object):
