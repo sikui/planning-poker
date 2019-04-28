@@ -143,17 +143,15 @@ class Poll(object):
     @cherrypy.popargs('poll_id')
     def edit_poll(self, poll_id):
         data = cherrypy.request.json
-        if data.get("id") is None:
+        if poll_id is None:
             cherrypy.response.status = 400
             return {"message": "Poll ID is not in the request."}
-        poll_id = data.get("id")
-        data.pop("id")
         update_str = list()
         for key in data.keys():
             update_str.append('SET {}="{}"'.format(key, data[key]))
         conn = cherrypy.thread_data.db
         c = conn.cursor()
-        c.execute("UPDATE polls %ss WHERE id = %ss", (','.join(item for item in update_str), poll_id))
+        c.execute("UPDATE polls {} WHERE id = {}".format(','.join(item for item in update_str), poll_id))
         conn.commit()
         return {"message": "Poll correctly modified."}
 
