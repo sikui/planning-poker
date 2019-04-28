@@ -67,15 +67,15 @@ class Vote(object):
     def poll_user_vote(self, poll_id, user_id):
         if poll_id is None:
             cherrypy.response.status = 400
-            return {"data" : "Poll ID is missing."}
+            return {"error" : "Poll ID is missing."}
         try:
             int(poll_id)
         except ValueError:
             cherrypy.response.status = 400
-            return {"data": "Invalid Poll ID."}
+            return {"error": "Invalid Poll ID."}
         if user_id is None:
             cherrypy.response.status = 400
-            return {"data" : "User ID is missing."}
+            return {"error" : "User ID is missing."}
         c = cherrypy.thread_data.db.cursor()
         vote =c.execute("SELECT value FROM votes WHERE user_id=%s AND poll_id = %s",
         (user_id, poll_id))
@@ -93,10 +93,10 @@ class Users(object):
     def list_user_polls(self, user_id):
         if user_id is None:
             cherrypy.response.status = 400
-            return {"message" : "Missing user id"}
+            return {"error" : "Missing user id"}
         if user_id.strip() == "":
             cherrypy.response.status = 400
-            return {"message" : "User ID cannot be empty."}
+            return {"error" : "User ID cannot be empty."}
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE user_id = %s", (user_id))
         poll_list = list()
@@ -122,10 +122,10 @@ class Poll(object):
         keys = list(data.keys())
         if not all(key in keys for key in self.mandatory_field):
             cherrypy.response.status = 400
-            return {"message": "The request is not well formed."}
+            return {"error": "The request is not well formed."}
         if any([value == "" for value in data.values()]) :
             cherrypy.response.status = 400
-            return {"message": "Some field in the request are empty."}
+            return {"error": "Some field in the request are empty."}
         # create a new poll
         conn = cherrypy.thread_data.db
         c = conn.cursor()
@@ -135,7 +135,7 @@ class Poll(object):
             conn.commit()
         except pymysql.err.IntegrityError:
             cherrypy.response.status = 400
-            return {"data" : "Poll creation encountered an error."}
+            return {"error" : "Poll creation encountered an error."}
         return {"data" : c.lastrowid}
 
     @cherrypy.expose
@@ -146,7 +146,7 @@ class Poll(object):
         data = cherrypy.request.json
         if poll_id is None:
             cherrypy.response.status = 400
-            return {"message": "Poll ID is not in the request."}
+            return {"error": "Poll ID is not in the request."}
         update_str = list()
         for key in data.keys():
             update_str.append('SET {}="{}"'.format(key, data[key]))
@@ -162,10 +162,10 @@ class Poll(object):
     def polls_details(self, poll_id):
         if poll_id is None:
             cherry.response.status = 400
-            return {"message": "Missing poll id in the request."}
+            return {"error": "Missing poll id in the request."}
         if poll_id.strip() == "":
             cherry.response.status = 400
-            return {"message": "Poll ID cannot be empty"}
+            return {"error": "Poll ID cannot be empty"}
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE id = %s", (poll_id))
         poll_details = c.fetchone()
