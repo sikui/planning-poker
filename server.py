@@ -1,5 +1,6 @@
 import cherrypy
-import sqlite3
+import pymysql
+import pymysql.cursors
 
 def CORS():
     cherrypy.response.headers["Access-Control-Allow-Origin"] = "http://localhost"
@@ -41,15 +42,16 @@ class Vote(object):
             cherrypy.response.status = 400
             return {"message" : "Vote should be numeric."}
         # create a new vote
-        with sqlite3.connect("polls.db") as c:
-            exists = c.execute("SELECT * FROM votes WHERE user_id = ? AND poll_id = ?",
-            [user_id, poll_id])
-            if exists.fetchone() is not None :
-                c.execute("UPDATE votes SET value= ? WHERE user_id= ? AND poll_id = ?",
-                [vote, user_id, poll_id])
-            else:
-                c.execute("INSERT INTO votes VALUES (?, ?, ?)",
-                    [vote, poll_id, user_id])
+        c = cherrypy.thread_data.db.cursor()
+        c.execute("SELECT * FROM votes WHERE user_id = %s AND poll_id = %s",
+        [user_id, poll_id])
+        (exists,) = c.fetchone()
+        if exists is not None :
+            c.execute("UPDATE votes SET value= %s WHERE user_id= %s AND poll_id = %s",
+            (vote, user_id, poll_id))
+        else:
+            c.execute("INSERT INTO votes VALUES (%s, %s, %s)",
+                (vote, poll_id, user_id))
         return {"message": "The vote has been registerd."}
 
     @cherrypy.expose
@@ -65,10 +67,10 @@ class Vote(object):
         if user_id is None:
             cherrypy.response.status = 400
             return {"data" : "User ID is missing."}
-        with sqlite3.connect("polls.db") as c:
-            vote =c.execute("SELECT value FROM votes WHERE user_id=? AND poll_id = ?",
-            [user_id, poll_id])
-            value = vote.fetchone()
+        c = cherrypy.thread_data.db.cursor()
+        vote =c.execute("SELECT value FROM votes WHERE user_id=%s AND poll_id = %s",
+        (user_id, poll_id))
+        (value,) = c.fetchone()
         return {"data" : {"vote": value[0] if value else None}}
 
 @cherrypy.popargs('user_id')
@@ -86,15 +88,15 @@ class Users(object):
         if user_id.strip() == "":
             cherrypy.response.status = 400
             return {"message" : "User ID cannot be empty."}
-        with sqlite3.connect("polls.db") as c:
-            result = c.execute("SELECT * FROM polls WHERE user_id = ?", [user_id])
-            poll_list = list()
-            for poll in result.fetchall():
-                tmp = dict()
-                tmp['id'] = poll[0]
-                tmp['title'] = poll[1]
-                tmp['description'] = poll[1]
-                poll_list.append(tmp)
+        c = cherrypy.thread_data.db.cursor()
+        result = c.execute("SELECT * FROM polls WHERE user_id = %ss", (user_id))
+        poll_list = list()
+        for poll in result.fetchall():
+            tmp = dict()
+            tmp['id'] = poll[0]
+            tmp['title'] = poll[1]
+            tmp['description'] = poll[1]
+            poll_list.append(tmp)
         return {"polls" : poll_list}
 
 
@@ -115,11 +117,16 @@ class Poll(object):
             cherrypy.response.status = 400
             return {"message": "Some field in the request are empty."}
         # create a new poll
-        with sqlite3.connect("polls.db") as c:
-            cursor = c.execute("INSERT INTO polls (title, description, created_at, user_id) VALUES (?, ?, ?, ?)",
-                [data['title'], data['description'], data['created_at'] , data['user_id']])
-            c.commit()
-        return {"poll_id" : cursor.lastrowid}
+        conn = cherrypy.thread_data.db
+        c = conn.cursor()
+        sql = "INSERT INTO `polls` (`title`, `description`, `created_at`, `user_id`) VALUES (%s, %s, %s, %s)"
+        try:
+            c.execute(sql, (data['title'], data['description'], data['created_at'] , data['user_id']))
+            conn.commit()
+        except pymysql.err.IntegrityError:
+            cherrypy.response.status = 400
+            return {"data" : "Poll creation encountered an error."}
+        return {"data" : c.lastrowid}
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
@@ -135,10 +142,10 @@ class Poll(object):
         update_str = list()
         for key in data.keys():
             update_str.append('SET {}="{}"'.format(key, data[key]))
-        with sqlite3.connect("polls.db") as c:
-            print("UPDATE polls {} WHERE id = {}".format(','.join(item for item in update_str), poll_id))
-            c.execute("UPDATE polls {} WHERE id = {}".format(','.join(item for item in update_str), poll_id))
-            c.commit()
+        conn = cherrypy.thread_data.db
+        c = conn.cursor()
+        c.execute("UPDATE polls %ss WHERE id = %ss", (','.join(item for item in update_str), poll_id))
+        conn.commit()
         return {"message": "Poll correctly modified."}
 
     @cherrypy.expose
@@ -151,9 +158,9 @@ class Poll(object):
         if poll_id.strip() == "":
             cherry.response.status = 400
             return {"message": "Poll ID cannot be empty"}
-        with sqlite3.connect("polls.db") as c:
-            poll = c.execute("SELECT * FROM polls WHERE id = ?", [poll_id])
-        poll_details = poll.fetchone()
+        c = cherrypy.thread_data.db.cursor()
+        c.execute("SELECT * FROM polls WHERE id = %s", (poll_id))
+        (poll_details,) = c.fetchone()
         return {"poll": {
                 "title" : poll_details[1],
                 "description" : poll_details[2],
@@ -161,13 +168,16 @@ class Poll(object):
             }
         }
 
-def setup_database():
-    # enable foreign key enforcement in sqlite3
-    conn = sqlite3.connect("polls.db")
-    conn.execute("PRAGMA foreign_keys = 1")
+def setup_database(threadIndex):
+    cherrypy.thread_data.db = pymysql.connect(host='localhost',
+                             user='root',
+                             password='amicapelosetta',
+                             db='poll',
+                             charset='utf8mb4',
+                             cursorclass=pymysql.cursors.DictCursor)
 
 if __name__ == '__main__':
-    cherrypy.engine.subscribe('start', setup_database)
+    cherrypy.engine.subscribe('start_thread', setup_database)
     cherrypy.tools.CORS = cherrypy.Tool('before_handler', CORS)
     d = cherrypy.dispatch.RoutesDispatcher()
 
