@@ -1,10 +1,19 @@
 import cherrypy
 import pymysql
 import pymysql.cursors
+import json
+import datetime
+import encoder
+
+json_encoder = encoder.JSONEncoder()
+
+def json_handler(*args, **kwargs):
+    # Adapted from cherrypy/lib/jsontools.py
+    value = cherrypy.serving.request._json_inner_handler(*args, **kwargs)
+    return json_encoder.iterencode(value)
 
 def CORS():
     cherrypy.response.headers["Access-Control-Allow-Origin"] = "http://localhost"
-
 
 @cherrypy.popargs('user_id', 'poll_id')
 @cherrypy.tools.json_out()
@@ -45,7 +54,7 @@ class Vote(object):
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM votes WHERE user_id = %s AND poll_id = %s",
         [user_id, poll_id])
-        (exists,) = c.fetchone()
+        exists = c.fetchone()
         if exists is not None :
             c.execute("UPDATE votes SET value= %s WHERE user_id= %s AND poll_id = %s",
             (vote, user_id, poll_id))
@@ -70,7 +79,7 @@ class Vote(object):
         c = cherrypy.thread_data.db.cursor()
         vote =c.execute("SELECT value FROM votes WHERE user_id=%s AND poll_id = %s",
         (user_id, poll_id))
-        (value,) = c.fetchone()
+        value = c.fetchone()
         return {"data" : {"vote": value[0] if value else None}}
 
 @cherrypy.popargs('user_id')
@@ -149,7 +158,7 @@ class Poll(object):
         return {"message": "Poll correctly modified."}
 
     @cherrypy.expose
-    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_out(handler=json_handler)
     @cherrypy.popargs('poll_id')
     def polls_details(self, poll_id):
         if poll_id is None:
@@ -160,11 +169,11 @@ class Poll(object):
             return {"message": "Poll ID cannot be empty"}
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE id = %s", (poll_id))
-        (poll_details,) = c.fetchone()
+        poll_details = c.fetchone()
         return {"poll": {
-                "title" : poll_details[1],
-                "description" : poll_details[2],
-                "created_at" : poll_details[3]
+                "title" : poll_details['title'],
+                "description" : poll_details['description'],
+                "created_at" : poll_details['created_at']
             }
         }
 
