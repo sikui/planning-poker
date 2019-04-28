@@ -157,6 +157,21 @@ class Poll(object):
         return {"message": "Poll correctly modified."}
 
     @cherrypy.expose
+    @cherrypy.tools.json_out()
+    def polls_list(self):
+        c = cherrypy.thread_data.db.cursor()
+        c.execute("SELECT * FROM polls WHERE date(created_at) = CURDATE()")
+        result = c .fetchall()
+        polls = list()
+        for item in result:
+            tmp = {}
+            tmp['id'] = item['id']
+            tmp['title'] = item['title']
+            tmp['description'] = item['description']
+            polls.append(tmp)
+        return {"data": {"polls": polls}}
+
+    @cherrypy.expose
     @cherrypy.tools.json_out(handler=json_handler)
     @cherrypy.popargs('poll_id')
     def polls_details(self, poll_id):
@@ -206,6 +221,11 @@ if __name__ == '__main__':
     d.connect("polls_details", route="/{poll_id}",
                  controller=Poll(),
                  action='polls_details',
+                 conditions=dict(method=['GET']))
+
+    d.connect("polls_list", route="/list/",
+                 controller=Poll(),
+                 action='polls_list',
                  conditions=dict(method=['GET']))
 
 
