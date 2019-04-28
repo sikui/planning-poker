@@ -107,7 +107,7 @@ class Users(object):
             tmp['title'] = poll['title']
             tmp['description'] = poll['description']
             poll_list.append(tmp)
-        return {"polls" : poll_list}
+        return {"data" : {"polls" : poll_list}}
 
 
 class Poll(object):
@@ -168,6 +168,7 @@ class Poll(object):
             tmp['id'] = item['id']
             tmp['title'] = item['title']
             tmp['description'] = item['description']
+            tmp['user_id'] = item['user_id']
             polls.append(tmp)
         return {"data": {"polls": polls}}
 
