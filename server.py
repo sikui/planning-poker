@@ -155,7 +155,7 @@ class Poll(object):
         return {"message": "Poll correctly modified."}
 
     @cherrypy.expose
-    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_out(handler=json_handler)
     def polls_list(self):
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE date(created_at) = CURDATE()")
