@@ -82,6 +82,12 @@ class Vote(object):
         value = c.fetchone()
         return {"data" : {"vote": value[0] if value else None}}
 
+    def poll_votes(poll_id):
+        c = cherrypy.thread_data.db.cursor()
+        c.execute("SELECT value, count(*) as vote FROM votes WHERE poll_id=%s GROUP BY value", poll_id)
+        return c.fetchall()
+
+
 @cherrypy.popargs('user_id')
 class Users(object):
     def __init__(self):
@@ -99,15 +105,7 @@ class Users(object):
             return {"error" : "User ID cannot be empty."}
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE user_id = %s", (user_id))
-        poll_list = list()
-        result = c .fetchall()
-        for poll in result:
-            tmp = dict()
-            tmp['id'] = poll['id']
-            tmp['title'] = poll['title']
-            tmp['description'] = poll['description']
-            poll_list.append(tmp)
-        return {"data" : {"polls" : poll_list}}
+        return {"data" : {"polls" : c.fetchall()}}
 
 
 class Poll(object):
@@ -161,16 +159,7 @@ class Poll(object):
     def polls_list(self):
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE date(created_at) = CURDATE()")
-        result = c .fetchall()
-        polls = list()
-        for item in result:
-            tmp = {}
-            tmp['id'] = item['id']
-            tmp['title'] = item['title']
-            tmp['description'] = item['description']
-            tmp['user_id'] = item['user_id']
-            polls.append(tmp)
-        return {"data": {"polls": polls}}
+        return {"data": {"polls": c.fetchall()}}
 
     @cherrypy.expose
     @cherrypy.tools.json_out(handler=json_handler)
@@ -185,13 +174,15 @@ class Poll(object):
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE id = %s", (poll_id))
         poll_details = c.fetchone()
+        votes = Vote.poll_votes(poll_id)
         if poll_details:
             return {"data": {
                             "poll" :{
                                 "title" : poll_details['title'],
                                 "description" : poll_details['description'],
                                 "created_at" : poll_details['created_at']
-                                }
+                                },
+                                "votes" : votes,
                             }
                     }
         else: return {"data" : {"poll" : None}}
