@@ -105,7 +105,8 @@ class Users(object):
             return {"error" : "User ID cannot be empty."}
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE user_id = %s", (user_id))
-        return {"data" : {"polls" : c.fetchall()}}
+        result = c.fetchall()
+        return {"data" : {"polls" : result}}
 
 
 class Poll(object):
