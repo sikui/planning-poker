@@ -117,11 +117,12 @@ class Poll(object):
     @cherrypy.tools.json_in()
     def create_poll(self):
         data = cherrypy.request.json
+        data['created_at'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         keys = list(data.keys())
         if not all(key in keys for key in self.mandatory_field):
             cherrypy.response.status = 400
             return {"error": "The request is not well formed."}
-        if any([value == "" for value in data.values()]) :
+        if data.get('title') == "":
             cherrypy.response.status = 400
             return {"error": "Some field in the request are empty."}
         # create a new poll
@@ -142,6 +143,7 @@ class Poll(object):
     @cherrypy.popargs('poll_id')
     def edit_poll(self, poll_id):
         data = cherrypy.request.json
+        data['created_at'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if poll_id is None:
             cherrypy.response.status = 400
             return {"error": "Poll ID is not in the request."}
