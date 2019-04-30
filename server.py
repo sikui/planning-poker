@@ -80,7 +80,7 @@ class Vote(object):
         vote =c.execute("SELECT value FROM votes WHERE user_id=%s AND poll_id = %s",
         (user_id, poll_id))
         value = c.fetchone()
-        return {"data" : {"vote": value[0] if value else None}}
+        return {"data" : {"vote": value['value'] if value else None}}
 
     def poll_votes(poll_id):
         c = cherrypy.thread_data.db.cursor()
@@ -180,7 +180,7 @@ class Poll(object):
         votes = Vote.poll_votes(poll_id)
         if poll_details:
             return {"data": {
-                            "poll" :{
+                            "polls" :{
                                 "title" : poll_details['title'],
                                 "description" : poll_details['description'],
                                 "created_at" : poll_details['created_at']
@@ -188,7 +188,7 @@ class Poll(object):
                                 "votes" : votes,
                             }
                     }
-        else: return {"data" : {"poll" : None}}
+        else: return {"data" : {"polls" : None}}
 
 def setup_database(threadIndex):
     cherrypy.thread_data.db = pymysql.connect(host='localhost',
