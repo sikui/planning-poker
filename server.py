@@ -80,11 +80,11 @@ class Vote(object):
         vote =c.execute("SELECT value FROM votes WHERE user_id=%s AND poll_id = %s",
         (user_id, poll_id))
         value = c.fetchone()
-        return {"data" : {"vote": value['value'] if value else None}}
+        return {"data" : {"votes": value['value'] if value else None}}
 
     def poll_votes(self,poll_id):
         c = cherrypy.thread_data.db.cursor()
-        c.execute("SELECT value, count(*) as vote FROM votes WHERE poll_id=%s GROUP BY value", poll_id)
+        c.execute("SELECT value, count(*) as votes FROM votes WHERE poll_id=%s GROUP BY value", poll_id)
         votes = c.fetchall()
         zero_votes = set(self.possible_votes) - set([item['value'] for item in votes])
         for item in zero_votes:
