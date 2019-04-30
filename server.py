@@ -82,10 +82,17 @@ class Vote(object):
         value = c.fetchone()
         return {"data" : {"vote": value['value'] if value else None}}
 
-    def poll_votes(poll_id):
+    def poll_votes(self,poll_id):
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT value, count(*) as vote FROM votes WHERE poll_id=%s GROUP BY value", poll_id)
-        return c.fetchall()
+        votes = c.fetchall()
+        zero_votes = set(self.possible_votes) - set([item['value'] for item in votes])
+        for item in zero_votes:
+            votes.append({
+                'value': item,
+                'votes': 0
+            })
+        return sorted(votes, key=lambda x: float(x['value']))
 
 
 @cherrypy.popargs('user_id')
@@ -177,7 +184,7 @@ class Poll(object):
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT * FROM polls WHERE id = %s", (poll_id))
         poll_details = c.fetchone()
-        votes = Vote.poll_votes(poll_id)
+        votes = Vote().poll_votes(poll_id)
         if poll_details:
             return {"data": {
                             "polls" :{
