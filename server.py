@@ -44,7 +44,7 @@ class Vote(object):
             return {"error" : "Vote value is missing."}
         vote = data['value']
         try:
-            int(vote)
+            float(vote)
             if vote not in self.possible_votes:
                 cherrypy.response.status = 400
                 return {"error" : "Invalid vote value."}
@@ -94,6 +94,7 @@ class Vote(object):
                 'value': item,
                 'votes': 0
             })
+        c.close()
         return sorted(votes, key=lambda x: float(x['value']))
 
 
@@ -145,6 +146,7 @@ class Poll(object):
         except pymysql.err.IntegrityError:
             cherrypy.response.status = 400
             return {"error" : "Poll creation encountered an error."}
+        c.close()
         return {"data" : c.lastrowid}
 
     @cherrypy.expose
@@ -250,7 +252,8 @@ if __name__ == '__main__':
 
     conf = {'/': {
             'request.dispatch': d,
-            'tools.CORS.on': True
+            'tools.CORS.on': True,
+            'tools.caching.on' : False
             }
     }
 
