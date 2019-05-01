@@ -4,6 +4,7 @@ import pymysql.cursors
 import json
 import datetime
 import encoder
+import hashlib
 
 json_encoder = encoder.JSONEncoder()
 
@@ -94,7 +95,6 @@ class Vote(object):
                 'value': item,
                 'votes': 0
             })
-        c.close()
         return sorted(votes, key=lambda x: float(x['value']))
 
 
@@ -118,6 +118,29 @@ class Users(object):
         result = c.fetchall()
         return {"data" : {"polls" : result}}
 
+    @cherrypy.expose
+    @cherrypy.tools.json_out()
+    @cherrypy.tools.json_in()
+    def create_user(self):
+        data = cherrypy.request.json
+        username = data['username']
+        if username is None:
+            cherrypy.response.status = 400
+            return {"error" : "Missing username"}
+        if username.strip() == "":
+            cherrypy.response.status = 400
+            return {"error": "Username cannot be empty."}
+        conn = cherrypy.thread_data.db
+        c = conn.cursor()
+        token = hashlib.sha256(username.encode('utf-8')).hexdigest()[:32]
+        print(token, username)
+        try:
+            c.execute("INSERT INTO users (username, token) VALUES (%s,%s)", (username,token))
+            conn.commit()
+        except pymysql.err.IntegrityError:
+            cherrypy.response.status = 400
+            return {"error" : "User creation encountered an error."}
+        return {"data": {"token": token }}
 
 class Poll(object):
     def __init__(self):
@@ -146,7 +169,6 @@ class Poll(object):
         except pymysql.err.IntegrityError:
             cherrypy.response.status = 400
             return {"error" : "Poll creation encountered an error."}
-        c.close()
         return {"data" : c.lastrowid}
 
     @cherrypy.expose
@@ -234,6 +256,10 @@ if __name__ == '__main__':
                  action='polls_list',
                  conditions=dict(method=['GET']))
 
+    d.connect("user_create", route="/users/create",
+                 controller=Users(),
+                 action='create_user',
+                 conditions=dict(method=['POST']))
 
     d.connect("user_polls", route="/users/{user_id}",
                  controller=Users(),
@@ -253,9 +279,10 @@ if __name__ == '__main__':
     conf = {'/': {
             'request.dispatch': d,
             'tools.CORS.on': True,
-            'tools.caching.on' : False
+            'tools.caching.on' : False,
             }
     }
 
+    cherrypy.config.update({'server.thread_pool': 1})
     cherrypy.tree.mount(Poll(), '/polls', config=conf)
     cherrypy.engine.start()
