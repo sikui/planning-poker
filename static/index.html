@@ -2,23 +2,31 @@
 <head>
   <title>Create Polls</title>
   <script src="js/jquery-3.4.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
   <link rel="stylesheet" type="text/css" href="css/style.css">
+
   <script src="js/script.js"></script>
+  <script>
+    var currentPoll = undefined;
+  </script>
+
 </head>
 <body>
 
 <div class="row">
    <div class="col-3"> <img src="images/logo.png"/></div>
   <div class="col"> <h1> Epidemic Sound Polls</h1> </div>
+  <div class="col"> <button class="btn" id="create_user" data-toggle="modal" data-target="#createUser"> Create User </button> </div>
 </div>
 <div class="container">
   <div class="row">
 
-    <div class="col">
+    <div class="col-6">
        <p> <i class="fas fa-poll"></i> New Polls </p>
       <table id="current-polls" class="table">
           <thead>
@@ -27,38 +35,40 @@
               <th scope="col">Description</th>
               <th scope="col">User</th>
               <th scope="col">Details</th>
-              <th scope="col">Share</th>
+              <th scope="col">Share Link</th>
             </tr>
           </thead>
           <tbody>
           </tbody>
       </table>
     </div> <!-- List of Polls -->
-    <div class="col">
+    <div class="col-6">
       <div>
         <p> <i class="fas fa-poll"></i>Polls created by me </p>
       </div>
-      <div>
+      <div class="col">
         <table id="user-polls" class="table">
             <thead>
               <tr>
                 <th scope="col">Title</th>
                 <th scope="col">Description</th>
+                <th scope="col">User</th>
                 <th scope="col">Details</th>
-                <th scope="col">Share</th>
+                <th scope="col">Share Link</th>
               </tr>
             </thead>
             <tbody>
             </tbody>
         </table>
       </div>
-      <div >
+      <div>
         <button type="button" class="btn modal-button" data-toggle="modal" data-target="#pollModal">Create a poll</button>
       </div>
-      </div>
     </div> <!-- Create + List of user POlls -->
+   </div> <!-- End row -->
 
     <!-- Modal for poll creation -->
+</div>
 <div class="modal fade" id="pollModal" tabindex="-1" role="dialog" aria-labelledby="pollModal" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -69,21 +79,21 @@
         </button>
       </div>
       <div class="modal-body">
-        <form>
+        <form class="form">
           <div class="form-group">
            <label for="pollTitle">Title</label>
-           <input type="text" class="form-control" id="pollTitle" placeholder="Enter a title">
+           <input type="text" class="form-control" id="pollTitle" placeholder="Enter a title" required>
          </div>
          <div class="form-group">
            <label for="pollDescription">Description</label>
-           <textarea class="form-control" aria-label="With textarea"></textarea>
+           <textarea class="form-control" id="pollDescription" aria-label="With textarea"></textarea>
          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn modal-button">Save</button>
-      </div>
+         <div class="modal-footer">
+           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+           <button type="submit" class="btn modal-button" id="subimt-form">Save</button>
+         </div>
+       </form>
+       </div>
     </div>
   </div>
 </div> <!-- End of Modal -->
@@ -93,38 +103,60 @@
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Poll's Title</h5>
+        <h5 class="modal-title" id="poll_title"></h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
         <div class="row">
-          <p class="col"> Questa e' la descrizione della miaaaaa.. morte </p>
+          <p class="col" id="poll_description"></p>
         </div>
         <div class="row">
           <canvas id="pollVotes"></canvas>
         </div>
         <div class="row">
-          <button type="button" class="col btn btn-outline-secondary">0</button>
-          <button type="button" class="col btn btn-outline-secondary">1/2</button>
-          <button type="button" class="col btn btn-outline-secondary">1</button>
-          <button type="button" class="col btn btn-outline-secondary">2</button>
-          <button type="button" class="col btn btn-outline-secondary">3</button>
-          <button type="button" class="col btn btn-outline-secondary">5</button>
-          <button type="button" class="col btn btn-outline-secondary">8</button>
-          <button type="button" class="col btn btn-outline-secondary">13</button>
+          <button id="vote-0" type="button" class="col btn btn-outline-secondary">0</button>
+          <button id="vote-0-5" type="button" class="col btn btn-outline-secondary">0.5</button>
+          <button id="vote-1"   type="button" class="col btn btn-outline-secondary">1</button>
+          <button id="vote-2" type="button" class="col btn btn-outline-secondary">2</button>
+          <button id="vote-3" type="button" class="col btn btn-outline-secondary">3</button>
+          <button id="vote-5" type="button" class="col btn btn-outline-secondary">5</button>
+          <button id="vote-8" type="button" class="col btn btn-outline-secondary">8</button>
+          <button id="vote-13" type="button" class="col btn btn-outline-secondary">13</button>
         </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn modal-button">Save</button>
       </div>
     </div>
   </div>
 </div> <!-- End of Modal -->
 
+<!-- Create user Modal dialog -->
+<div class="modal fade" id="createUser" tabindex="-1" aria-labelledby="createUser" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create User</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" class="form-control" id="username" placeholder="Username" required>
+          </div>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="create-user">Save changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div> <!-- End of Modal -->
 
-</div> <!-- Main Page -->
+ <!-- Main Page -->
 </body>
 </html>
