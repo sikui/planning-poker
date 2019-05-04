@@ -99,13 +99,13 @@ class Vote(object):
 
 
 @cherrypy.popargs('user_id')
+@cherrypy.tools.json_in()
+@cherrypy.tools.json_out(handler=json_handler)
 class Users(object):
     def __init__(self):
         pass
 
     @cherrypy.expose
-    @cherrypy.tools.json_out(handler=json_handler)
-    @cherrypy.tools.json_in()
     def list_user_polls(self, user_id):
         if user_id is None:
             cherrypy.response.status = 400
@@ -114,13 +114,11 @@ class Users(object):
             cherrypy.response.status = 400
             return {"error" : "User ID cannot be empty."}
         c = cherrypy.thread_data.db.cursor()
-        c.execute("SELECT * FROM polls WHERE user_id = %s", (user_id))
+        c.execute("SELECT p.id, p.title, p.description, u.username, p.created_at  FROM polls p join users u on p.user_id = u.token WHERE p.user_id = %s", (user_id))
         result = c.fetchall()
         return {"data" : {"polls" : result}}
 
     @cherrypy.expose
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.json_in()
     def create_user(self):
         data = cherrypy.request.json
         username = data['username']
@@ -133,7 +131,6 @@ class Users(object):
         conn = cherrypy.thread_data.db
         c = conn.cursor()
         token = hashlib.sha256(username.encode('utf-8')).hexdigest()[:32]
-        print(token, username)
         try:
             c.execute("INSERT INTO users (username, token) VALUES (%s,%s)", (username,token))
             conn.commit()
@@ -142,13 +139,15 @@ class Users(object):
             return {"error" : "User creation encountered an error."}
         return {"data": {"token": token }}
 
+
+@cherrypy.popargs('poll_id')
+@cherrypy.tools.json_out(handler=json_handler)
+@cherrypy.tools.json_in()
 class Poll(object):
     def __init__(self):
         self.mandatory_field = ["title", "description", "created_at", "user_id"]
 
     @cherrypy.expose
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.json_in()
     def create_poll(self):
         data = cherrypy.request.json
         data['created_at'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -172,9 +171,6 @@ class Poll(object):
         return {"data" : c.lastrowid}
 
     @cherrypy.expose
-    @cherrypy.tools.json_out()
-    @cherrypy.tools.json_in()
-    @cherrypy.popargs('poll_id')
     def edit_poll(self, poll_id):
         data = cherrypy.request.json
         data['created_at'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -191,15 +187,12 @@ class Poll(object):
         return {"message": "Poll correctly modified."}
 
     @cherrypy.expose
-    @cherrypy.tools.json_out(handler=json_handler)
     def polls_list(self):
         c = cherrypy.thread_data.db.cursor()
-        c.execute("SELECT * FROM polls WHERE date(created_at) = CURDATE()")
+        c.execute("SELECT p.id, p.title, p.description, u.username, p.created_at  FROM polls p join users u on p.user_id = u.token  WHERE date(created_at) = CURDATE()")
         return {"data": {"polls": c.fetchall()}}
 
     @cherrypy.expose
-    @cherrypy.tools.json_out(handler=json_handler)
-    @cherrypy.popargs('poll_id')
     def polls_details(self, poll_id):
         if poll_id is None:
             cherry.response.status = 400
@@ -213,15 +206,12 @@ class Poll(object):
         votes = Vote().poll_votes(poll_id)
         if poll_details:
             return {"data": {
-                            "polls" :{
-                                "title" : poll_details['title'],
-                                "description" : poll_details['description'],
-                                "created_at" : poll_details['created_at']
-                                },
-                                "votes" : votes,
+                            "polls" :poll_details,
+                            "votes" : votes,
                             }
                     }
-        else: return {"data" : {"polls" : None}}
+        else:
+            return {"data" : {"polls" : None}}
 
 def setup_database(threadIndex):
     cherrypy.thread_data.db = pymysql.connect(host='localhost',
