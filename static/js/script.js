@@ -226,7 +226,6 @@ $(document).ready(function(){
         myBarChart.data.datasets.forEach((dataset) => {
           dataset.data = vote;
         });
-        console.log(myBarChart);
         myBarChart.update(0);
     } else {
       if(myBarChart!=null){
