@@ -68,7 +68,7 @@ $(document).ready(function(){
   function loadUserPolls(){
     var token = getAuthToken("user");
     if (token) {
-      var url = "/polls/users/" + getAuthToken("user");
+      var url = "/polls/users/" + token
       doRequest(url, "GET").then(function(response) {
         polls = response['data']['polls'];
         addRowsTable(polls,"user-polls")
