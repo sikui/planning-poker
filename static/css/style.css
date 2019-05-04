@@ -17,3 +17,23 @@ td > button {
   cursor: pointer;
   border-radius: 5px;
 }
+
+.vote_chosen{
+  background-color: rgb(232, 87, 100);
+  opacity: 0.8;
+}
+
+.description {
+  text-overflow: ellipsis;
+}
+
+.swal-modal {
+  padding-bottom: 25px;
+}
+
+#create_user {
+  background-color: #FF8F70;
+  padding: 10px;
+  margin: 10px;
+  color: white;
+}
