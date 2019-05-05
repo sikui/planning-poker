@@ -27,7 +27,7 @@ def read_config():
     return config
 
 
-@cherrypy.popargs('user_id', 'poll_id')
+@cherrypy.popargs('token', 'poll_id')
 @cherrypy.tools.json_out()
 @cherrypy.tools.json_in()
 class Vote(object):
@@ -36,18 +36,17 @@ class Vote(object):
         self.mandatory_field = ['value', 'poll_id', 'user_id']
 
     @cherrypy.expose
-    def create_or_edit_vote(self, user_id, poll_id):
+    def create_or_edit_vote(self, token, poll_id):
         data = cherrypy.request.json
         keys = list(data.keys())
-        # TODO: check if user_id and poll_id are valid before inserting
         if poll_id is None:
             return error(400, "Poll ID is missing.")
         try:
             int(poll_id)
         except ValueError:
             return error(400, "Invalid Poll ID.")
-        if user_id is None:
-            return error(400, "User ID is missing.")
+        if token is None:
+            return error(400, "Token is missing.")
         if data.get('value') is None:
             return error(400, "Vote value is missing.")
         vote = data['value']
@@ -62,25 +61,25 @@ class Vote(object):
         c = conn.cursor()
         try:
             c.execute("INSERT INTO votes (value, poll_id, user_id) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE value=%s",
-                (vote, poll_id, user_id, vote))
+                (vote, poll_id, token, vote))
             conn.commit()
         except pymysql.err.IntegrityError:
             return error(400, "Inserting vote has encountered an error.")
         return {"data": "The vote has been registerd."}
 
     @cherrypy.expose
-    def poll_user_vote(self, poll_id, user_id):
+    def poll_user_vote(self, poll_id, token):
         if poll_id is None:
             return error(400, "Poll ID is missing.")
         try:
             int(poll_id)
         except ValueError:
             return error(400, "Invalid Poll ID.")
-        if user_id is None:
+        if token is None:
             return error(400, "User ID is missing.")
         c = cherrypy.thread_data.db.cursor()
         vote =c.execute("SELECT value FROM votes WHERE user_id=%s AND poll_id = %s",
-        (user_id, poll_id))
+        (token, poll_id))
         value = c.fetchone()
         return {"data" : {"votes": value['value'] if value else None}}
 
@@ -97,19 +96,19 @@ class Vote(object):
         return sorted(votes, key=lambda x: float(x['value']))
 
 
-@cherrypy.popargs('user_id')
+@cherrypy.popargs('token')
 @cherrypy.tools.json_in()
 @cherrypy.tools.json_out(handler=json_handler)
 class Users(object):
 
     @cherrypy.expose
-    def list_user_polls(self, user_id):
-        if user_id is None:
-            return error(400, "Missing user id.")
-        if user_id.strip() == "":
+    def list_user_polls(self, token):
+        if token is None:
+            return error(400, "Missing token.")
+        if token.strip() == "":
             return error(400, "User ID cannot be empty.")
         c = cherrypy.thread_data.db.cursor()
-        c.execute("SELECT p.id, p.title, p.description, u.username, p.created_at  FROM polls p join users u on p.user_id = u.token WHERE p.user_id = %s", (user_id))
+        c.execute("SELECT p.id, p.title, p.description, u.username, p.created_at  FROM polls p join users u on p.user_id = u.token WHERE p.user_id = %s", (token))
         result = c.fetchall()
         return {"data" : {"polls" : result}}
 
@@ -239,17 +238,17 @@ if __name__ == '__main__':
                  action='create_user',
                  conditions=dict(method=['POST']))
 
-    d.connect("user_polls", route="/users/{user_id}",
+    d.connect("user_polls", route="/users/{token}",
                  controller=Users(),
                  action='list_user_polls',
                  conditions=dict(method=['GET']))
 
-    d.connect("user_vote", route="/{poll_id}/users/{user_id}/vote",
+    d.connect("user_vote", route="/{poll_id}/users/{token}/vote",
                  controller=Vote(),
                  action='create_or_edit_vote',
                  conditions=dict(method=['POST']))
 
-    d.connect("user_votes", route="/{poll_id}/users/{user_id}",
+    d.connect("user_votes", route="/{poll_id}/users/{token}",
                  controller=Vote(),
                  action='poll_user_vote',
                  conditions=dict(method=['GET']))
