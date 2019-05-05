@@ -164,7 +164,6 @@ class Poll(object):
     @cherrypy.expose
     def edit_poll(self, poll_id):
         data = cherrypy.request.json
-        data['created_at'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if poll_id is None:
             return error(400, "Poll ID is not in the request.")
         update_str = list()
