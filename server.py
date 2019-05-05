@@ -21,7 +21,7 @@ def CORS():
 @cherrypy.tools.json_in()
 class Vote(object):
     def __init__(self):
-        self.possible_votes = ['0', '0.5', '1', '2', '3', '5', '8', '13']
+        self.available_votes = ['0', '0.5', '1', '2', '3', '5', '8', '13']
         self.mandatory_field = ['value', 'poll_id', 'user_id']
 
     @cherrypy.expose
@@ -46,7 +46,7 @@ class Vote(object):
         vote = data['value']
         try:
             float(vote)
-            if vote not in self.possible_votes:
+            if vote not in self.available_votes:
                 cherrypy.response.status = 400
                 return {"error" : "Invalid vote value."}
         except ValueError:
@@ -89,7 +89,7 @@ class Vote(object):
         votes = c.fetchall()
         if len(votes) == 0:
             votes = []
-        zero_votes = set(self.possible_votes) - set([item['value'] for item in votes])
+        zero_votes = set(self.available_votes) - set([item['value'] for item in votes])
         for item in zero_votes:
             votes.append({
                 'value': item,
