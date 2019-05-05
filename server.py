@@ -87,7 +87,7 @@ class Vote(object):
     def poll_votes(self,poll_id):
         c = cherrypy.thread_data.db.cursor()
         c.execute("SELECT value, count(*) as votes FROM votes WHERE poll_id=%s GROUP BY value", poll_id)
-        votes = c.fetchall()
+        votes = list(c.fetchall())
         zero_votes = self.available_votes - set(item['value'] for item in votes)
         for item in zero_votes:
             votes.append({
