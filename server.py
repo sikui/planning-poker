@@ -159,7 +159,7 @@ class Poll(object):
             conn.commit()
         except pymysql.err.IntegrityError:
             return error(400, "Poll creation encountered an error.")
-        return {"data" : "Poll created."}
+        return {"data" : c.lastrowid}
 
     @cherrypy.expose
     def edit_poll(self, poll_id):
