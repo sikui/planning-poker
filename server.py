@@ -173,7 +173,7 @@ class Poll(object):
         c = conn.cursor()
         c.execute("UPDATE polls {} WHERE id = {}".format(','.join(item for item in update_str), poll_id))
         conn.commit()
-        return {"message": "Poll correctly modified."}
+        return {"data": "Poll correctly modified."}
 
     @cherrypy.expose
     def polls_list(self):
