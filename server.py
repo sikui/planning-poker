@@ -5,6 +5,7 @@ import json
 import datetime
 import encoder
 import hashlib
+import configparser
 
 json_encoder = encoder.JSONEncoder()
 
@@ -19,6 +20,11 @@ def CORS():
 def error(status,message):
     cherrypy.response.status = status
     return {"error": message}
+
+def read_config():
+    config = configparser.ConfigParser()
+    config.read('sql_config.ini')
+    return config
 
 
 @cherrypy.popargs('user_id', 'poll_id')
@@ -196,10 +202,11 @@ class Poll(object):
             return {"data" : {"polls" : None}}
 
 def setup_database(threadIndex):
-    cherrypy.thread_data.db = pymysql.connect(host='localhost',
-                             user='root',
-                             password='amicapelosetta',
-                             db='poll',
+    sql_config = read_config()
+    cherrypy.thread_data.db = pymysql.connect(host=sql_config['database']['host'],
+                             user=sql_config['database']['user'],
+                             password=sql_config['database']['password'],
+                             db=sql_config['database']['db'],
                              charset='utf8mb4',
                              cursorclass=pymysql.cursors.DictCursor)
 
