@@ -127,7 +127,8 @@ class Users(object):
         try:
             c.execute("INSERT INTO users (username, token) VALUES (%s,%s)", (username,token))
             conn.commit()
-        except pymysql.err.IntegrityError:
+        except pymysql.err.IntegrityError as e:
+            print(str(e))
             cherrypy.response.status = 400
             return {"error" : "User creation encountered an error."}
         return {"data": {"token": token }}
@@ -138,7 +139,7 @@ class Users(object):
 @cherrypy.tools.json_in()
 class Poll(object):
     def __init__(self):
-        self.mandatory_field = ["title", "description", "user_id"]
+        self.mandatory_field = ["title", "user_id"]
 
     @cherrypy.expose
     def create_poll(self):
@@ -156,7 +157,8 @@ class Poll(object):
         try:
             c.execute(sql, (data['title'], data['description'], data['created_at'] , data['user_id']))
             conn.commit()
-        except pymysql.err.IntegrityError:
+        except pymysql.err.IntegrityError as e:
+            print(str(e))
             return error(400, "Poll creation encountered an error.")
         return {"data" : c.lastrowid}
 
@@ -165,12 +167,14 @@ class Poll(object):
         data = cherrypy.request.json
         if poll_id is None:
             return error(400, "Poll ID is not in the request.")
+        if data.get('title') == "":
+            return error(400, "Some field in the request are empty.")
         update_str = list()
         for key in data.keys():
             update_str.append('SET {}="{}"'.format(key, data[key]))
         conn = cherrypy.thread_data.db
         c = conn.cursor()
-        c.execute("UPDATE polls {} WHERE id = {}".format(','.join(item for item in update_str), poll_id))
+        c.execute("UPDATE polls %s WHERE id = %s" % (','.join(item for item in update_str), poll_id))
         conn.commit()
         return {"data": "Poll correctly modified."}
 
