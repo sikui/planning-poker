@@ -116,6 +116,14 @@ class TestAPI(unittest.TestCase):
         assert response.status_code == 200
         assert type(response.json()['data']['votes']) == type(None)
 
+    def get_todays_polls(self):
+        response = requests.get("http://localhost:8080/polls/list/")
+        assert response.status_code == 200
+        assert len(response.json()['data']['polls']) == 1
+        assert response.json()['data']['polls']['username'] == "random_username"
+        assert response.json()['data']['polls']['id'] == self.poll_id
+
+
 
 
 
