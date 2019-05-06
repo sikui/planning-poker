@@ -46,7 +46,22 @@ class TestAPI(unittest.TestCase):
         assert response.status_code == 200
         assert type(response.json()['data']['polls']) ==  type(None)
 
-    
+    def test_edit_poll(self):
+        data = {
+            "title"  : "A brand new title"
+        }
+        response = requests.post("http://localhost:8080/polls/" + str(self.poll_id), json=data)
+        assert response.status_code == 200
+        assert response.json()['data'] == "Poll correctly modified."
+
+    def test_failure_edit_poll(self):
+        data = {
+            "title"  : ""
+        }
+        response = requests.post("http://localhost:8080/polls/" + str(self.poll_id), json=data)
+        assert response.status_code == 400
+        assert response.json()['error'] == "Some field in the request are empty."
+
 
 if __name__ == '__main__':
     unittest.main()
