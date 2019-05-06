@@ -63,5 +63,22 @@ class TestAPI(unittest.TestCase):
         assert response.json()['error'] == "Some field in the request are empty."
 
 
+    def test_list_user_poll(self):
+        response = requests.get("http://localhost:8080/polls/users/" + self.token)
+        assert response.status_code == 200
+        assert len(response.json()['data']['polls']) == 1
+        assert response.json()['data']['polls'][0]['id'] == self.poll_id
+        assert response.json()['data']['polls'][0]['username'] == "random_username"
+
+    def test_list_not_existing_user(self):
+        fake_user = self.token + "123444"
+        response = requests.get("http://localhost:8080/polls/users/" + fake_user)
+        assert response.status_code == 200
+        assert response.json()['data']['polls'] == []
+
+
+
+
+
 if __name__ == '__main__':
     unittest.main()
