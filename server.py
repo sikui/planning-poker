@@ -138,7 +138,7 @@ class Users(object):
 @cherrypy.tools.json_in()
 class Poll(object):
     def __init__(self):
-        self.mandatory_field = ["title", "description", "created_at", "user_id"]
+        self.mandatory_field = ["title", "description", "user_id"]
 
     @cherrypy.expose
     def create_poll(self):
