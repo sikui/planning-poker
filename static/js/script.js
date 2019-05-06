@@ -162,6 +162,7 @@ $(document).ready(function(){
     }
     var url = "polls/" + poll_id + "/users/" + getAuthToken("user") + "/vote";
     doRequest(url, "POST", data).then(function(response) {
+      vote = vote.replace(".", "-");
       $('button[id*=vote-]').removeClass("vote_chosen");
       $('button[id=vote-' + vote + ']').addClass("vote_chosen");
     });
