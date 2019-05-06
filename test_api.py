@@ -76,7 +76,33 @@ class TestAPI(unittest.TestCase):
         assert response.status_code == 200
         assert response.json()['data']['polls'] == []
 
+    def test_cast_vote(self):
+        url = "http://localhost:8080/polls/{}/users/{}/vote".format(self.poll_id, self.token)
+        data ={
+            "value" : "5"
+        }
+        response = requests.post(url, json = data)
+        assert response.status_code == 200
+        assert response.json()['data'] == "The vote has been registerd."
 
+    def test_failure_cast_vote(self):
+        url = "http://localhost:8080/polls/{}/users/{}/vote".format(self.poll_id, self.token)
+        data ={
+            "value" : "5345"
+        }
+        response = requests.post(url, json = data)
+        assert response.status_code == 400
+        assert response.json()['error'] == "Invalid vote value."
+
+    def test_failure_cast_vote_fake_user(self):
+        fake_user = self.token + "123444"
+        url = "http://localhost:8080/polls/{}/users/{}/vote".format(self.poll_id, fake_user)
+        data ={
+            "value" : "5"
+        }
+        response = requests.post(url, json = data)
+        assert response.status_code == 400
+        assert response.json()['error'] == "Inserting vote has encountered an error."
 
 
 
