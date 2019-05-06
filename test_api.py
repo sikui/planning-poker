@@ -104,6 +104,19 @@ class TestAPI(unittest.TestCase):
         assert response.status_code == 400
         assert response.json()['error'] == "Inserting vote has encountered an error."
 
+    def test_get_user_vote(self):
+        url = "http://localhost:8080/polls/{}/users/{}".format(self.poll_id, self.token)
+        response = requests.get(url)
+        assert response.status_code == 200
+        assert response.json()['data']['votes'] == "5"
+
+    def test_no_vote_for_poll(self):
+        url = "http://localhost:8080/polls/{}/users/{}".format("59", self.token)
+        response = requests.get(url)
+        assert response.status_code == 200
+        assert type(response.json()['data']['votes']) == type(None)
+
+
 
 
 if __name__ == '__main__':
